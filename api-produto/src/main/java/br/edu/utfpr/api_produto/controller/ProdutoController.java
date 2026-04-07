@@ -1,8 +1,10 @@
 package br.edu.utfpr.api_produto.controller;
 
 import br.edu.utfpr.api_produto.dto.ProdutoDTO;
+import br.edu.utfpr.api_produto.dto.VendaDTO;
 import br.edu.utfpr.api_produto.model.Produto;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -23,35 +25,73 @@ public class ProdutoController {
     }
 
     @GetMapping
-    public List<ProdutoDTO> getAll(){
+    public ResponseEntity<List<ProdutoDTO>> getAll(){
         List<ProdutoDTO> produtosDTO = new ArrayList<>();
 
         for (Produto produto : this.produtos) {
             produtosDTO.add(toProdutoDTO(produto));
         }
 
-        return produtosDTO;
+        return ResponseEntity.ok(produtosDTO);
     }
 
     @GetMapping("/{id}")
-    public ProdutoDTO getOne(@PathVariable("id") Long id){
+    public ResponseEntity<ProdutoDTO> getOne(@PathVariable("id") Long id){
         for (Produto p : this.produtos){
             if (p.getId() == id){
-                return toProdutoDTO(p);
+                return ResponseEntity.ok(toProdutoDTO(p));
             }
         }
-        return null;
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public String add(@Valid @RequestBody ProdutoDTO produtoDTO){
+    public ResponseEntity<Void> add(@Valid @RequestBody ProdutoDTO produtoDTO){
         this.produtos.add(toProduto(produtoDTO));
-        return "Produto criado com sucesso";
+        return ResponseEntity.ok().build();
     }
 
     // Tarefa: baixarEstoque
 
-    // delete update
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id){
+        for (Produto p : this.produtos){
+            if (p.getId() == id){
+                this.produtos.remove(p);
+                return ResponseEntity.noContent().build();
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProdutoDTO> update(@PathVariable Long id, @Valid @RequestBody ProdutoDTO produtoDTO){
+        for (Produto p : this.produtos){
+            if (p.getId() == id){
+                p.setDescription(produtoDTO.description());
+                p.setQuantity(produtoDTO.quantity());
+                p.setPrice(produtoDTO.price());
+                p.setCategory(produtoDTO.category());
+                return ResponseEntity.ok(toProdutoDTO(p));
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/venda")
+    public ResponseEntity<Void> venda(@PathVariable Long id, @Valid @RequestBody VendaDTO vendaDTO){
+        for (Produto p : this.produtos){
+            if (p.getId() == id){
+                if (p.getQuantity() >= vendaDTO.quantity()){
+                    p.setQuantity(p.getQuantity() - vendaDTO.quantity());
+                    return ResponseEntity.noContent().build();
+                } else {
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
 
     private ProdutoDTO toProdutoDTO(Produto produto){
         ProdutoDTO produtoDTO = new ProdutoDTO(
