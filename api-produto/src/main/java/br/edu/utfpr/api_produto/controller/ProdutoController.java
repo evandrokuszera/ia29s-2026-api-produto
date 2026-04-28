@@ -3,6 +3,7 @@ package br.edu.utfpr.api_produto.controller;
 import br.edu.utfpr.api_produto.dto.ProdutoDTO;
 import br.edu.utfpr.api_produto.dto.VendaDTO;
 import br.edu.utfpr.api_produto.model.Produto;
+import br.edu.utfpr.api_produto.repositories.ProdutoRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +16,11 @@ import java.util.List;
 public class ProdutoController {
 
     private List<Produto> produtos;
+    private ProdutoRepository produtoRepository;
 
-    public ProdutoController(){
+    public ProdutoController(ProdutoRepository produtoRepository){
+        this.produtoRepository = produtoRepository; // injeção de dependência.
+
         produtos = new ArrayList<>();
         produtos.add(new Produto(1L, "Iphone15", 10, 4000.0, "Telefones"));
         produtos.add(new Produto(2L, "S22", 10, 5000.0, "Telefones"));
@@ -27,27 +31,27 @@ public class ProdutoController {
     @GetMapping
     public ResponseEntity<List<ProdutoDTO>> getAll(){
         List<ProdutoDTO> produtosDTO = new ArrayList<>();
-
-        for (Produto produto : this.produtos) {
+        // select * from produto;
+        for (Produto produto : this.produtoRepository.findAll()) {
             produtosDTO.add(toProdutoDTO(produto));
         }
-
         return ResponseEntity.ok(produtosDTO);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProdutoDTO> getOne(@PathVariable("id") Long id){
-        for (Produto p : this.produtos){
-            if (p.getId() == id){
-                return ResponseEntity.ok(toProdutoDTO(p));
-            }
+        // select * from produto where id = ?
+        Produto produtoBD = this.produtoRepository.findById(id).orElse(null);
+        if (produtoBD == null){
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(toProdutoDTO(produtoBD));
         }
-        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
     public ResponseEntity<Void> add(@Valid @RequestBody ProdutoDTO produtoDTO){
-        this.produtos.add(toProduto(produtoDTO));
+        this.produtoRepository.save(  toProduto(produtoDTO)  );
         return ResponseEntity.ok().build();
     }
 

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record ProdutoDTO(
-        @NotNull(message = "ID é obrigatório")
+        //@NotNull(message = "ID é obrigatório")
         Long id,
 
         @NotBlank(message = "Descrição obrigatória")
