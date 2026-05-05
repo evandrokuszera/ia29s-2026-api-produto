@@ -5,6 +5,8 @@ import br.edu.utfpr.api_produto.dto.VendaDTO;
 import br.edu.utfpr.api_produto.model.Produto;
 import br.edu.utfpr.api_produto.repositories.ProdutoRepository;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +28,12 @@ public class ProdutoController {
         produtos.add(new Produto(2L, "S22", 10, 5000.0, "Telefones"));
         produtos.add(new Produto(3L, "Notebook", 10, 8000.0, "Computadores"));
         produtos.add(new Produto(4L, "Cadeira Gamer", 10, 1000.0, "Móveis"));
+    }
+
+    @GetMapping("/paginacao")
+    public ResponseEntity<Page<ProdutoDTO>> getAllPageable(Pageable pageable){
+        Page<Produto> page = this.produtoRepository.findAll(pageable);
+        return ResponseEntity.ok( page.map(this::toProdutoDTO) );
     }
 
     @GetMapping
@@ -96,6 +104,17 @@ public class ProdutoController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @GetMapping("/faixa-preco")
+    public ResponseEntity<List<Produto>> getProdutosByPrice(
+           @RequestParam double min, @RequestParam double max
+    ){
+        return ResponseEntity.ok(
+                this.produtoRepository.findByPriceBetween(min, max)
+        );
+    }
+
+    // ###################################################################################
 
     private ProdutoDTO toProdutoDTO(Produto produto){
         ProdutoDTO produtoDTO = new ProdutoDTO(
