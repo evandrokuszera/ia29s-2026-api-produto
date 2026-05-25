@@ -32,6 +32,7 @@ public class PedidoController {
         Pedido pedido = new Pedido();
         pedido.setDate( LocalDateTime.now() );
         pedido.setAmount(0.0);
+        pedido.setStatus("CREATED");
 
         Pedido pedidoSalvo = this.pedidoRepository.save(pedido);
         return ResponseEntity.ok( pedidoSalvo );
@@ -54,6 +55,10 @@ public class PedidoController {
         ItemPedido itemSalvo = this.itemPedidoRepository.save( item );
 
         // atualizar amount do Pedido
+        double valorPedido = pedido.getAmount() + (item.getUnitPrice() * item.getQuantity());
+        pedido.setAmount(valorPedido);
+        this.pedidoRepository.save(pedido);
+
         // dar baixa no estoque, em Produto
 
         return ResponseEntity.ok( itemSalvo );

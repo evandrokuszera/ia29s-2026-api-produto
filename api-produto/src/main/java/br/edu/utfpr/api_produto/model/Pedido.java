@@ -19,6 +19,10 @@ public class Pedido {
     private Long id;
     private LocalDateTime date;
     private Double amount;
+    private String zipCode;
+    private Double shippingValue;
+    private Integer deliveryDays;
+    private String status;
 
     @OneToMany(mappedBy = "pedido")
     private List<ItemPedido> items;
