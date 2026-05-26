@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: api-frete
+
+server:
+  port: 8081
