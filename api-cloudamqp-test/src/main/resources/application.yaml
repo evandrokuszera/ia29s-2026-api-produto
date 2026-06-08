@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: api-cloudamqp-test
+  rabbitmq:
+    host: gorilla.lmq.cloudamqp.com
+    username: kmqpwhnn
+    password: 5XI0e9JMXcZ9xiAMUbFPn2CBMOgEFFxi # revelar a senha no site CloudAMQP
+    port: 5672
+    virtual-host: kmqpwhnn
