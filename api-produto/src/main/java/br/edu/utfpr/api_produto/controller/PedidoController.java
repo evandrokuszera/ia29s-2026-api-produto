@@ -1,6 +1,8 @@
 package br.edu.utfpr.api_produto.controller;
 
 import br.edu.utfpr.api_produto.dto.AddItemPedidoDTO;
+import br.edu.utfpr.api_produto.dto.FreteRequestDTO;
+import br.edu.utfpr.api_produto.dto.FreteResponseDTO;
 import br.edu.utfpr.api_produto.model.ItemPedido;
 import br.edu.utfpr.api_produto.model.Pedido;
 import br.edu.utfpr.api_produto.model.Produto;
@@ -9,6 +11,7 @@ import br.edu.utfpr.api_produto.repositories.PedidoRepository;
 import br.edu.utfpr.api_produto.repositories.ProdutoRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -71,6 +74,44 @@ public class PedidoController {
         if (pedido == null) return ResponseEntity.notFound().build();
 
         return ResponseEntity.ok( pedido );
+    }
+
+    // -------------------------------------------------------------------
+    // Integração com serviço API-FRETES
+    // -------------------------------------------------------------------
+
+    // RestClient para permitir comunicação entre os microserviços
+    private RestClient restClient = RestClient
+            .create("http://localhost:8081/fretes");
+
+    // Novo endpoint para consultar api-fretes
+    @PostMapping("/{id}/frete/{cep}")
+    public ResponseEntity<Pedido> frete(@PathVariable Long id, @PathVariable String cep){
+        // Consulta pedido no banco de dados
+        Pedido pedido = this.pedidoRepository.findById(id).orElse(null);
+
+        if (pedido == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        // Envia requisição para api-fretes
+        FreteRequestDTO freteRequestDTO = new FreteRequestDTO(cep, pedido.getAmount());
+
+        FreteResponseDTO freteResponseDTO = restClient
+                .post()
+                .body(freteRequestDTO)
+                .retrieve()
+                .body(FreteResponseDTO.class);
+
+        // Atualiza informações do pedido (fretes, status, etc)
+        pedido.setZipCode(cep);
+        pedido.setShippingValue(freteResponseDTO.shippingPrice());
+        pedido.setDeliveryDays(freteResponseDTO.deliveryDays());
+        pedido.setStatus("WAITING_PAYMENT");
+        this.pedidoRepository.save(pedido);
+
+        // Retorna informações do pedido atualizado.
+        return ResponseEntity.ok(pedido);
     }
 
 }
